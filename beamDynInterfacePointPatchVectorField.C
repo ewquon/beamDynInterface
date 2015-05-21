@@ -30,6 +30,8 @@ License
 #include "polyMesh.H"
 #include "displacementMotionSolver.H"
 
+#include "beamDynInterface.H"
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -107,8 +109,8 @@ void beamDynInterfacePointPatchVectorField::updateCoeffs()
 //    Info<< "Begin updateCoeffs" << endl;
 
 
-    const pointField& localPoints = patch().localPoints(); // returns polyPatch_.meshPoints()
-    //const labelList& meshPoints = patch().meshPoints(); // returns polyPatch_.localPoints()
+    //const labelList& meshPoints = patch().meshPoints(); // returns polyPatch_.meshPoints(), i.e. node IDs
+    const pointField& localPoints = patch().localPoints(); // returns polyPatch_.localPoints(), i.e. node coords
 
     const polyMesh& mesh = this->dimensionedInternalField().mesh()();
     const Time& t = mesh.time();
@@ -122,32 +124,55 @@ void beamDynInterfacePointPatchVectorField::updateCoeffs()
     const scalar xoff(0.25);
     const scalar chord(1);
     //const vector camber(0,-0.25,0); // this blows up after ~0.06 seconds
-    //const vector camber(0,-0.1,0); // this is convergent
     //const vector camber(0,-0.2,0); // blows up after ~0.07 seconds
+    //const vector camber(0,-0.1,0); // this is convergent
     const vector camber(0,-0.15,0); // this is convergent
     scalar norm(xoff);
     if( chord-xoff > xoff ) norm = chord-xoff;
+
+    Info<< "Retrieving updated displacements (beamDynInterfacePointPatch)" << endl;
+    scalar pi(Foam::constant::mathematical::pi);
+    if(Pstream::master())
+    {
+        int nnodes;
+        beamDynGetNnodes(&nnodes);
+
+        // --loop over nodes in the BeamDyn blade model (assumed single element)
+        double pos[3], rot[3];
+        for( int inode=0; inode<nnodes; ++inode )
+        {
+            // get node position
+            beamDynGetNode0Position( &inode, pos, rot );
+            Info<< "node_displacement " << inode << " at "
+                << pos[0] << "," << pos[1] << "," << pos[2]
+                << " with orientation "
+                << 180.0/pi*rot[0] << "," << 180.0/pi*rot[1] << "," << 180.0/pi*rot[2]
+                << endl;
+        }
+    }
 
     // ***NOTE*** localPoints are the points on the current processor only! 
     forAll(*this, ptI)
     {
 
+//        /////////////////////////////////////////////////////////////////////////////////////////////
+//        // TESTS:
+//
+//        // sinusoidal plunging motion, equivalent to Field<vector>::operator=(amplitude*sin(omega*t.value()));
+//        //this->operator[](ptI) = amplitude*sin(omega*t.value());
+//        
+//        // sinusoidal plunging motion with variable camber
+//        scalar xI(localPoints[ptI].component(0));
+//        vector deform(camber);
+//        deform *= sqr((xI-xoff)/norm);
+//        this->operator[](ptI) = (amplitude + deform) * sin(omega*t.value());
+//        /////////////////////////////////////////////////////////////////////////////////////////////
+        
         // TODO: retrieve interpolated displacements from BeamDyn
 
-        /////////////////////////////////////////////////////////////////////////////////////////////
-        // TESTS:
-
-        // sinusoidal motion, equivalent to Field<vector>::operator=(amplitude*sin(omega*t.value()));
-        //this->operator[](ptI) = amplitude*sin(omega*t.value());
-        
-        // sinusoidal motion with variable camber
-        scalar xI(localPoints[ptI].component(0));
-        vector deform(camber);
-        deform *= sqr((xI-xoff)/norm);
-        this->operator[](ptI) = (amplitude + deform) * sin(omega*t.value());
-        /////////////////////////////////////////////////////////////////////////////////////////////
-        
     }
+
+    Info<< endl;
     
     fixedValuePointPatchField<vector>::updateCoeffs();
 //    Info<< "End updateCoeffs" << endl;

@@ -30,7 +30,7 @@ License
 #include "polyMesh.H"
 #include "displacementMotionSolver.H"
 
-#include "beamDynInterface.H"
+//#include "beamDyn.H" // BD namespace
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -49,6 +49,7 @@ beamDynInterfacePointPatchVectorField
     fixedValuePointPatchField<vector>(p, iF)
 {
     Info<< "Created instance of beamDynInterfacePointPatchVectorField (2)" << endl;
+    //#include "parametrizeSurface.H"
 }
 
 
@@ -63,6 +64,7 @@ beamDynInterfacePointPatchVectorField
     fixedValuePointPatchField<vector>(p, iF, dict)
 {
     Info<< "Created instance of beamDynInterfacePointPatchVectorField (3)" << endl;
+    //#include "parametrizeSurface.H"
     if (!dict.found("value"))
     {
         updateCoeffs();
@@ -82,6 +84,7 @@ beamDynInterfacePointPatchVectorField
     fixedValuePointPatchField<vector>(ptf, p, iF, mapper)
 {
     Info<< "Created instance of beamDynInterfacePointPatchVectorField (4)" << endl;
+    //#include "parametrizeSurface.H"
 }
 
 
@@ -95,6 +98,7 @@ beamDynInterfacePointPatchVectorField
     fixedValuePointPatchField<vector>(ptf, iF)
 {
     Info<< "Created instance of beamDynInterfacePointPatchVectorField (2,ptf)" << endl;
+    //#include "parametrizeSurface.H"
 }
 
 
@@ -116,40 +120,58 @@ void beamDynInterfacePointPatchVectorField::updateCoeffs()
     const Time& t = mesh.time();
 
     // TEST VALUES
-    const vector amplitude(0,0.75,0);
-    const scalar omega(15.707963267948966);
+//    const vector amplitude(0,0.75,0);
+//    const scalar omega(15.707963267948966);
+//
+//    // for cambered test
+//    // normalization guarantees that the max camber will be as specified
+//    const scalar xoff(0.25);
+//    const scalar chord(1);
+//    //const vector camber(0,-0.25,0); // this blows up after ~0.06 seconds
+//    //const vector camber(0,-0.2,0); // blows up after ~0.07 seconds
+//    //const vector camber(0,-0.1,0); // this is convergent
+//    const vector camber(0,-0.15,0); // this is convergent
+//    scalar norm(xoff);
+//    if( chord-xoff > xoff ) norm = chord-xoff;
 
-    // for cambered test
-    // normalization guarantees that the max camber will be as specified
-    const scalar xoff(0.25);
-    const scalar chord(1);
-    //const vector camber(0,-0.25,0); // this blows up after ~0.06 seconds
-    //const vector camber(0,-0.2,0); // blows up after ~0.07 seconds
-    //const vector camber(0,-0.1,0); // this is convergent
-    const vector camber(0,-0.15,0); // this is convergent
-    scalar norm(xoff);
-    if( chord-xoff > xoff ) norm = chord-xoff;
+//    Info<< "Retrieving updated displacements (beamDynInterfacePointPatch)" << endl;
+//    scalar pi(Foam::constant::mathematical::pi);
+//    if(Pstream::master())
+//    {
+//        int nnodes;
+//        beamDynGetNnodes(&nnodes);
+//
+//        // --loop over nodes in the BeamDyn blade model (assumed single element)
+//        double pos[3], rot[3];
+//        for( int inode=0; inode<nnodes; ++inode )
+//        {
+//            // get node position
+//            beamDynGetNode0Position( &inode, pos, rot );
+//            Info<< "node_displacement " << inode << " at "
+//                << pos[0] << "," << pos[1] << "," << pos[2]
+//                << " with orientation "
+//                << 180.0/pi*rot[0] << "," << 180.0/pi*rot[1] << "," << 180.0/pi*rot[2]
+//                << endl;
+//        }
+//    }
 
-    Info<< "Retrieving updated displacements (beamDynInterfacePointPatch)" << endl;
-    scalar pi(Foam::constant::mathematical::pi);
-    if(Pstream::master())
-    {
-        int nnodes;
-        beamDynGetNnodes(&nnodes);
-
-        // --loop over nodes in the BeamDyn blade model (assumed single element)
-        double pos[3], rot[3];
-        for( int inode=0; inode<nnodes; ++inode )
-        {
-            // get node position
-            beamDynGetNode0Position( &inode, pos, rot );
-            Info<< "node_displacement " << inode << " at "
-                << pos[0] << "," << pos[1] << "," << pos[2]
-                << " with orientation "
-                << 180.0/pi*rot[0] << "," << 180.0/pi*rot[1] << "," << 180.0/pi*rot[2]
-                << endl;
-        }
-    }
+//    #include "updateNodePositions.H"
+//    Can successfully retrieve displacements below, but already taken care of in beamDyn.C
+//      vectorList &pos = BD::pos();
+//      vectorList &rot = BD::rot();
+//      for( int inode=0; inode < BD::nnodes; ++inode )
+//      {
+//          // get node position
+//          Info<< "beamDynInterfacePPF node " << inode << " at "
+//              << pos[inode].component(0) 
+//              << "," << pos[inode].component(1)
+//              << "," << pos[inode].component(2)
+//              << " oriented "
+//              << 180.0/BD::pi*rot[inode].component(0)
+//              << "," << 180.0/BD::pi*rot[inode].component(1) 
+//              << "," << 180.0/BD::pi*rot[inode].component(2)
+//              << endl;
+//      }
 
     // ***NOTE*** localPoints are the points on the current processor only! 
     forAll(*this, ptI)

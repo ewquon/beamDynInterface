@@ -39,6 +39,8 @@ SourceFiles
 
 #include "fixedValuePointPatchField.H"
 
+#include "beamDyn.H"
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -52,12 +54,13 @@ class beamDynInterfacePointPatchVectorField
 :
     public fixedValuePointPatchField<vector>
 {
+    //const scalar pi(Foam::constant::mathematical::pi);
+
     // Private data
 
 //        vector amplitude_;
 //        scalar omega_;
-
-
+    
 public:
 
     //- Runtime type information

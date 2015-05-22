@@ -110,8 +110,6 @@ void beamDynInterfacePointPatchVectorField::updateCoeffs()
     {
         return;
     }
-//    Info<< "Begin updateCoeffs" << endl;
-
 
     //const labelList& meshPoints = patch().meshPoints(); // returns polyPatch_.meshPoints(), i.e. node IDs
     const pointField& localPoints = patch().localPoints(); // returns polyPatch_.localPoints(), i.e. node coords
@@ -119,11 +117,10 @@ void beamDynInterfacePointPatchVectorField::updateCoeffs()
     const polyMesh& mesh = this->dimensionedInternalField().mesh()();
     const Time& t = mesh.time();
 
-    // TEST VALUES
+// PARAMETERS FOR CAMBER/PLUNGE TEST
 //    const vector amplitude(0,0.75,0);
 //    const scalar omega(15.707963267948966);
 //
-//    // for cambered test
 //    // normalization guarantees that the max camber will be as specified
 //    const scalar xoff(0.25);
 //    const scalar chord(1);
@@ -134,28 +131,6 @@ void beamDynInterfacePointPatchVectorField::updateCoeffs()
 //    scalar norm(xoff);
 //    if( chord-xoff > xoff ) norm = chord-xoff;
 
-//    Info<< "Retrieving updated displacements (beamDynInterfacePointPatch)" << endl;
-//    scalar pi(Foam::constant::mathematical::pi);
-//    if(Pstream::master())
-//    {
-//        int nnodes;
-//        beamDynGetNnodes(&nnodes);
-//
-//        // --loop over nodes in the BeamDyn blade model (assumed single element)
-//        double pos[3], rot[3];
-//        for( int inode=0; inode<nnodes; ++inode )
-//        {
-//            // get node position
-//            beamDynGetNode0Position( &inode, pos, rot );
-//            Info<< "node_displacement " << inode << " at "
-//                << pos[0] << "," << pos[1] << "," << pos[2]
-//                << " with orientation "
-//                << 180.0/pi*rot[0] << "," << 180.0/pi*rot[1] << "," << 180.0/pi*rot[2]
-//                << endl;
-//        }
-//    }
-
-//    #include "updateNodePositions.H"
 //    Can successfully retrieve displacements below, but already taken care of in beamDyn.C
 //      vectorList &pos = BD::pos();
 //      vectorList &rot = BD::rot();
@@ -197,7 +172,6 @@ void beamDynInterfacePointPatchVectorField::updateCoeffs()
     Info<< endl;
     
     fixedValuePointPatchField<vector>::updateCoeffs();
-//    Info<< "End updateCoeffs" << endl;
 }
 
 

@@ -49,7 +49,6 @@ beamDynInterfacePointPatchVectorField
     fixedValuePointPatchField<vector>(p, iF)
 {
     Info<< "Created instance of beamDynInterfacePointPatchVectorField (2)" << endl;
-    //#include "parametrizeSurface.H"
 }
 
 
@@ -64,7 +63,6 @@ beamDynInterfacePointPatchVectorField
     fixedValuePointPatchField<vector>(p, iF, dict)
 {
     Info<< "Created instance of beamDynInterfacePointPatchVectorField (3)" << endl;
-    //#include "parametrizeSurface.H"
     if (!dict.found("value"))
     {
         updateCoeffs();
@@ -84,7 +82,6 @@ beamDynInterfacePointPatchVectorField
     fixedValuePointPatchField<vector>(ptf, p, iF, mapper)
 {
     Info<< "Created instance of beamDynInterfacePointPatchVectorField (4)" << endl;
-    //#include "parametrizeSurface.H"
 }
 
 
@@ -98,7 +95,6 @@ beamDynInterfacePointPatchVectorField
     fixedValuePointPatchField<vector>(ptf, iF)
 {
     Info<< "Created instance of beamDynInterfacePointPatchVectorField (2,ptf)" << endl;
-    //#include "parametrizeSurface.H"
 }
 
 
@@ -148,7 +144,7 @@ void beamDynInterfacePointPatchVectorField::updateCoeffs()
 //              << endl;
 //      }
 
-    // ***NOTE*** localPoints are the points on the current processor only! 
+    vectorList& disp = BD::disp();
     forAll(*this, ptI)
     {
 
@@ -164,8 +160,18 @@ void beamDynInterfacePointPatchVectorField::updateCoeffs()
 //        deform *= sqr((xI-xoff)/norm);
 //        this->operator[](ptI) = (amplitude + deform) * sin(omega*t.value());
 //        /////////////////////////////////////////////////////////////////////////////////////////////
-        
-        // TODO: retrieve interpolated displacements from BeamDyn
+
+        // TODO: account for origin not at (0 0 0)
+
+        this->operator[](ptI) = vector::zero;
+        for( int inode=0; inode<BD::nnodes; ++inode )
+        {
+            for( int i=0; i<3; ++i )
+            {
+                this->operator[](ptI).component(i) += 
+                    BD::h()[ptI*BD::nnodes+inode] * disp[inode].component(i);
+            }
+        }
 
     }
 

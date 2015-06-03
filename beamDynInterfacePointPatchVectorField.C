@@ -127,24 +127,11 @@ void beamDynInterfacePointPatchVectorField::updateCoeffs()
 //    scalar norm(xoff);
 //    if( chord-xoff > xoff ) norm = chord-xoff;
 
-//    Can successfully retrieve displacements below, but already taken care of in beamDyn.C
-//      vectorList &pos = BD::pos();
-//      vectorList &rot = BD::rot();
-//      for( int inode=0; inode < BD::nnodes; ++inode )
-//      {
-//          // get node position
-//          Info<< "beamDynInterfacePPF node " << inode << " at "
-//              << pos[inode].component(0) 
-//              << "," << pos[inode].component(1)
-//              << "," << pos[inode].component(2)
-//              << " oriented "
-//              << 180.0/BD::pi*rot[inode].component(0)
-//              << "," << 180.0/BD::pi*rot[inode].component(1) 
-//              << "," << 180.0/BD::pi*rot[inode].component(2)
-//              << endl;
-//      }
-
     vectorList& disp = BD::disp();
+
+    //
+    // --loop over all surface nodes
+    //
     forAll(*this, ptI)
     {
 

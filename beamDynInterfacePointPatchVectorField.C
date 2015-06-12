@@ -129,12 +129,21 @@ void beamDynInterfacePointPatchVectorField::updateCoeffs()
 
     vectorList& disp = BD::disp();
 
+    //Pout<< "Saved displacement : " << disp << endl;
+    //All procs have the same value
+    Info<< "Saved displacement : " << disp << endl;
+
+    scalar ymax(0);
+    scalar maxLoc(-1);
+    scalar hmin(9e9);
+    scalar hmax(-9e9);
+    scalar hsum;
+
     //
     // --loop over all surface nodes
     //
     forAll(*this, ptI)
     {
-
 //        /////////////////////////////////////////////////////////////////////////////////////////////
 //        // TESTS:
 //
@@ -151,6 +160,7 @@ void beamDynInterfacePointPatchVectorField::updateCoeffs()
         // TODO: account for origin not at (0 0 0)
 
         this->operator[](ptI) = vector::zero;
+        hsum = 0.0; //debug
         for( int inode=0; inode<BD::nnodes; ++inode )
         {
             for( int i=0; i<3; ++i )
@@ -158,12 +168,26 @@ void beamDynInterfacePointPatchVectorField::updateCoeffs()
                 this->operator[](ptI).component(i) += 
                     BD::h()[ptI*BD::nnodes+inode] * disp[inode].component(i);
             }
+            hsum += BD::h()[ptI*BD::nnodes+inode];
         }
 
+        // DEBUG:
+        if (this->operator[](ptI).component(1) > ymax)
+        {
+            ymax = this->operator[](ptI).component(1);
+            maxLoc = localPoints[ptI].component(0);
+        }
+        hmin = min(hmin, hsum);
+        hmax = max(hmax, hsum);
+    }
+    if(maxLoc >= 0)
+    {
+        Pout<< "  max y displacement = " << ymax 
+            << "  at x= " << maxLoc 
+            //<< "  (hmin/max: " << hmin << " " << hmax << ")"
+            << endl;
     }
 
-    Info<< endl;
-    
     fixedValuePointPatchField<vector>::updateCoeffs();
 }
 

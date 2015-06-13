@@ -127,17 +127,18 @@ void beamDynInterfacePointPatchVectorField::updateCoeffs()
 //    scalar norm(xoff);
 //    if( chord-xoff > xoff ) norm = chord-xoff;
 
-    vectorList& disp = BD::disp();
+    vectorList& disp = BD::disp();  // linear displacement
+    vectorList& adisp = BD::adisp(); // angular displacement
 
     //Pout<< "Saved displacement : " << disp << endl;
     //All procs have the same value
     Info<< "Saved displacement : " << disp << endl;
 
-    scalar ymax(0);
-    scalar maxLoc(-1);
-    scalar hmin(9e9);
-    scalar hmax(-9e9);
-    scalar hsum;
+    //double R[9];
+    double ang;
+    double tmp[3];
+    vector v(vector::zero);
+    vector a(vector::zero);
 
     //
     // --loop over all surface nodes
@@ -159,33 +160,44 @@ void beamDynInterfacePointPatchVectorField::updateCoeffs()
 
         // TODO: account for origin not at (0 0 0)
 
-        this->operator[](ptI) = vector::zero;
-        hsum = 0.0; //debug
+        // get displacement from pre-calculated shape function
+        v = vector::zero;
+        a = vector::zero;
         for( int inode=0; inode<BD::nnodes; ++inode )
         {
             for( int i=0; i<3; ++i )
             {
-                this->operator[](ptI).component(i) += 
+                v.component(i) += 
                     BD::h()[ptI*BD::nnodes+inode] * disp[inode].component(i);
+                a.component(i) += 
+                    BD::h()[ptI*BD::nnodes+inode] * adisp[inode].component(i);
             }
-            hsum += BD::h()[ptI*BD::nnodes+inode];
         }
 
-        // DEBUG:
-        if (this->operator[](ptI).component(1) > ymax)
-        {
-            ymax = this->operator[](ptI).component(1);
-            maxLoc = localPoints[ptI].component(0);
-        }
-        hmin = min(hmin, hsum);
-        hmax = max(hmax, hsum);
-    }
-    if(maxLoc >= 0)
-    {
-        Pout<< "  max y displacement = " << ymax 
-            << "  at x= " << maxLoc 
-            //<< "  (hmin/max: " << hmin << " " << hmax << ")"
-            << endl;
+
+        this->operator[](ptI) = vector::zero;
+        // apply rotation
+        //for( int j=0; j<3; ++j ) {
+        //    for( int i=0; i<3; ++i )
+        //    {
+        //        this->operator[](ptI).component(j) += R[3*j+i] * v.component(i);
+        //    }
+        //}
+
+        // TODO: general rotations, retrieve rotation matrix
+        // x-rotation
+        ang = a.component(0);
+        tmp[0] = 0.0;
+        tmp[1] = v.component(1)*Foam::cos(ang) - v.component(2)*Foam::sin(ang);
+        tmp[2] = v.component(1)*Foam::sin(ang) + v.component(2)*Foam::cos(ang);
+        // z-rotation
+        ang = a.component(2);
+        this->operator[](ptI).component(0) = tmp[0]*Foam::cos(ang) - tmp[1]*Foam::sin(ang);
+        this->operator[](ptI).component(1) = tmp[0]*Foam::sin(ang) + tmp[1]*Foam::cos(ang);
+        this->operator[](ptI).component(2) = tmp[2];
+
+        if(BD::twoD) this->operator[](ptI).component(BD::bladeDir) = 0.0;
+
     }
 
     fixedValuePointPatchField<vector>::updateCoeffs();

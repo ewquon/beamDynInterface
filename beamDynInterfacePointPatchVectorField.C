@@ -113,55 +113,22 @@ void beamDynInterfacePointPatchVectorField::updateCoeffs()
     const polyMesh& mesh = this->dimensionedInternalField().mesh()();
     const Time& t = mesh.time();
 
-// PARAMETERS FOR CAMBER/PLUNGE TEST
-//    const vector amplitude(0,0.75,0);
-//    const scalar omega(15.707963267948966);
-//
-//    // normalization guarantees that the max camber will be as specified
-//    const scalar xoff(0.25);
-//    const scalar chord(1);
-//    //const vector camber(0,-0.25,0); // this blows up after ~0.06 seconds
-//    //const vector camber(0,-0.2,0); // blows up after ~0.07 seconds
-//    //const vector camber(0,-0.1,0); // this is convergent
-//    const vector camber(0,-0.15,0); // this is convergent
-//    scalar norm(xoff);
-//    if( chord-xoff > xoff ) norm = chord-xoff;
+    vector u(vector::zero);
+    vector a(vector::zero);
+//    vector v(vector::zero);
+//    double ang;
+//    double tmpx[3], tmpy[3], tmpz[3];
 
     vectorList& disp = BD::disp();  // linear displacement
     vectorList& adisp = BD::adisp(); // angular displacement
-
-    //Pout<< "Saved displacement : " << disp << endl;
-    //All procs have the same value
     Info<< "- with linear displacement : " << disp << endl;
     Info<< "- with angular displacement : " << adisp << endl;
-
-    //double R[9];
-    double ang;
-    double tmpx[3], tmpy[3], tmpz[3];
-    vector u(vector::zero);
-    vector v(vector::zero);
-    vector a(vector::zero);
 
     //
     // --loop over all surface nodes
     //
     forAll(*this, ptI)
     {
-//        /////////////////////////////////////////////////////////////////////////////////////////////
-//        // TESTS:
-//
-//        // sinusoidal plunging motion, equivalent to Field<vector>::operator=(amplitude*sin(omega*t.value()));
-//        //this->operator[](ptI) = amplitude*sin(omega*t.value());
-//        
-//        // sinusoidal plunging motion with variable camber
-//        scalar xI(localPoints[ptI].component(0));
-//        vector deform(camber);
-//        deform *= sqr((xI-xoff)/norm);
-//        this->operator[](ptI) = (amplitude + deform) * sin(omega*t.value());
-//        /////////////////////////////////////////////////////////////////////////////////////////////
-
-        // TODO: account for origin not at (0 0 0)
-
         // get displacement from pre-calculated shape function
         u = vector::zero;
         a = vector::zero;
@@ -176,64 +143,21 @@ void beamDynInterfacePointPatchVectorField::updateCoeffs()
             }
         }
 
-        // apply rotation
-        //for( int j=0; j<3; ++j ) {
-        //    for( int i=0; i<3; ++i )
-        //    {
-        //        this->operator[](ptI).component(j) += R[3*j+i] * v.component(i);
-        //    }
-        //}
-
-        // TODO: general rotations, retrieve rotation matrix
-        // x-rotation
-        ang = a.component(0);
-//        v = localPoints[ptI] + u - BD::origin;
-//        tmpx[0] = 0.0;
-//        tmpx[1] = v.component(1)*(Foam::cos(ang)-1) - v.component(2)* Foam::sin(ang);
-//        tmpx[2] = v.component(1)* Foam::sin(ang)    + v.component(2)*(Foam::cos(ang) - 1);
-        v = localPoints[ptI] - BD::origin;
-        tmpx[0] = v.component(0)                                                - localPoints[ptI].component(0);
-        tmpx[1] = v.component(1)*Foam::cos(ang) - v.component(2)*Foam::sin(ang) - localPoints[ptI].component(1);
-        tmpx[2] = v.component(1)*Foam::sin(ang) + v.component(2)*Foam::cos(ang) - localPoints[ptI].component(2);
-
-//        tmpx[0] = 0.0;
-//        tmpx[1] = localPoints[ptI].component(1)*Foam::cos(ang) - localPoints[ptI].component(2)*Foam::sin(ang) - localPoints[ptI].component(1);
-//        tmpx[2] = localPoints[ptI].component(1)*Foam::sin(ang) + localPoints[ptI].component(2)*Foam::cos(ang) - localPoints[ptI].component(2);
-//
-//        // y-rotation TODO: CHECK THIS
-//        ang = a.component(1);
-//        tmpy[0] = localPoints[ptI].component(0)*Foam::cos(ang) + localPoints[ptI].component(2)*Foam::sin(ang) - localPoints[ptI].component(0);
-//        tmpy[1] = 0.0;
-//        tmpy[2] =-localPoints[ptI].component(0)*Foam::sin(ang) + localPoints[ptI].component(2)*Foam::cos(ang) - localPoints[ptI].component(2);
-//
-//        // z-rotation
-//        ang = a.component(2);
-//        tmpz[0] = localPoints[ptI].component(0)*Foam::cos(ang) - localPoints[ptI].component(1)*Foam::sin(ang) - localPoints[ptI].component(0);
-//        tmpz[1] = localPoints[ptI].component(0)*Foam::sin(ang) + localPoints[ptI].component(1)*Foam::cos(ang) - localPoints[ptI].component(1);
-//        tmpz[2] = 0.0;
-//
-//        this->operator[](ptI).component(0) = u.component(0) + tmpx[0] + tmpy[0] + tmpz[0];
-//        this->operator[](ptI).component(1) = u.component(1) + tmpx[1] + tmpy[1] + tmpz[1];
-//        this->operator[](ptI).component(2) = u.component(2) + tmpx[2] + tmpy[2] + tmpz[2];
-//
-//        Info<< u.component(0) << " " << tmpx[0] << " " << tmpy[0] << " " << tmpz[0] << endl;
-
-        //this->operator[](ptI) = vector::zero;
+        this->operator[](ptI) = u;
 
 /////////////////////////////////////////////////////////////////////
-// "NORMAL" OPERATION, DISPLACEMENT ONLY
-//        this->operator[](ptI) = u;
-
-// ROTATION TEST
-        this->operator[](ptI).component(0) += tmpx[0];
-        this->operator[](ptI).component(1) += tmpx[1];
-        this->operator[](ptI).component(2) += tmpx[2];
-
+// TODO: general rotations, retrieve rotation matrix
+// TODO: account for origin not at (0 0 0)
+// x-rotation, quick
+//        ang = a.component(0);
+//        v = localPoints[ptI] - BD::origin;
+//        tmpx[0] = v.component(0)                                                - localPoints[ptI].component(0);
+//        tmpx[1] = v.component(1)*Foam::cos(ang) - v.component(2)*Foam::sin(ang) - localPoints[ptI].component(1);
+//        tmpx[2] = v.component(1)*Foam::sin(ang) + v.component(2)*Foam::cos(ang) - localPoints[ptI].component(2);
+//        this->operator[](ptI).component(0) += tmpx[0];
+//        this->operator[](ptI).component(1) += tmpx[1];
+//        this->operator[](ptI).component(2) += tmpx[2];
 /////////////////////////////////////////////////////////////////////
-
-//        Info<< this->operator[](ptI) << "  u: " << u << " " 
-//            << tmpx[0] << " " << tmpx[1] << " " << tmpx[2]
-//            << endl;
 
         if(BD::twoD) this->operator[](ptI).component(BD::bladeDir) = 0.0;
 
